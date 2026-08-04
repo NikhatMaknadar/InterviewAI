@@ -4,16 +4,15 @@ node_modules/
 # Environment Variables
 .env
 
+# Uploaded Files
+server/uploads/
+
 # Logs
 *.log
 
-# OS Files
-.DS_Store
-Thumbs.db
+# Build
+dist/
+build/
 
 # VS Code
 .vscode/
-
-# Build folders
-dist/
-build/
