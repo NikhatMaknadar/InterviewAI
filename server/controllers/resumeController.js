@@ -1,5 +1,6 @@
 const Resume = require("../models/Resume");
 const { extractTextFromPDF } = require("../services/pdfService");
+const { analyzeResume } = require("../services/geminiService");
 const uploadResume = async (req, res) => {
   console.log(req.file);
   try {
@@ -25,14 +26,17 @@ const uploadResume = async (req, res) => {
 
     await resume.save();
 
+    const aiAnalysis = await analyzeResume(extractedText);
+
+    resume.aiAnalysis = aiAnalysis;
+
+    await resume.save();
+
     res.status(201).json({
       success: true,
-
       message: "Resume Uploaded Successfully",
-
       resume,
-
-      extractedText,
+      aiAnalysis,
     });
   } catch (error) {
     console.log(error);

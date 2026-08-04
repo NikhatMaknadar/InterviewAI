@@ -21,6 +21,10 @@ const resumeSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  aiAnalysis: {
+    type: Object,
+    default: {},
+  },
 
   uploadedAt: {
     type: Date,

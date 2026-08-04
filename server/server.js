@@ -1,9 +1,12 @@
 const dotenv = require("dotenv");
+
+// Load environment variables FIRST
+dotenv.config();
+
 const app = require("./app");
 const connectDB = require("./config/db");
 
-// Load environment variables
-dotenv.config();
+console.log("Gemini Key Loaded:", !!process.env.GEMINI_API_KEY);
 
 // Connect to MongoDB
 connectDB();
