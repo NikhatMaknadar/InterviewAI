@@ -1,12 +1,13 @@
 const { GoogleGenAI } = require("@google/genai");
 
-const analyzeInterviewQuestions = async (resumeAnalysis) => {
-  try {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const prompt = `
+const analyzeInterviewQuestions = async (resumeAnalysis) => {
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+
+  const prompt = `
 You are an experienced technical interviewer.
 
 The candidate is:
@@ -56,21 +57,51 @@ Rules:
 - Return ONLY valid JSON. Do not include markdown or explanations.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: prompt,
-    });
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+  ];
 
-    const cleanedText = response.text
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+  for (const model of models) {
+    try {
+      console.log(`Trying interview Gemini model: ${model}`);
 
-    return JSON.parse(cleanedText);
-  } catch (error) {
-    console.error("Interview Generation Error:", error);
-    throw error;
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+      });
+
+      const cleanedText = response.text
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      const result = JSON.parse(cleanedText);
+
+      console.log(`Interview questions generated successfully using: ${model}`);
+
+      return result;
+    } catch (error) {
+      const status = error.status || error.code;
+
+      console.error(
+        `Interview Gemini model ${model} failed with status: ${status}`,
+      );
+
+      if (status === 503 || status === 429 || status === 500) {
+        console.log("Trying next Gemini fallback model...");
+        await sleep(1000);
+        continue;
+      }
+
+      throw error;
+    }
   }
+
+  throw new Error(
+    "All Gemini models are temporarily unavailable. Please try again later.",
+  );
 };
 
 module.exports = {

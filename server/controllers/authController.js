@@ -2,7 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// ===============================
 // Register User
+// ===============================
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -46,7 +48,7 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Register Error:", error);
 
     res.status(500).json({
       success: false,
@@ -55,6 +57,9 @@ const registerUser = async (req, res) => {
   }
 };
 
+// ===============================
+// Login User
+// ===============================
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -88,14 +93,11 @@ const loginUser = async (req, res) => {
     }
 
     // Generate JWT
-
     const token = jwt.sign(
       {
         id: user._id,
       },
-
       process.env.JWT_SECRET,
-
       {
         expiresIn: "7d",
       },
@@ -103,61 +105,108 @@ const loginUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-
       message: "Login Successful",
-
       token,
-
       user: {
         id: user._id,
-
         name: user.name,
-
         email: user.email,
       },
     });
   } catch (error) {
-    console.log(error);
+    console.log("Login Error:", error);
 
     res.status(500).json({
       success: false,
-
       message: "Server Error",
     });
   }
 };
+
+// ===============================
 // Get Current User Profile
+// ===============================
 const getProfile = async (req, res) => {
   try {
-
     const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
-
   } catch (error) {
-
-    console.log(error);
+    console.log("Get Profile Error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Server Error"
+      message: "Server Error",
     });
-
   }
 };
 
+// ===============================
+// Update Current User Profile
+// ===============================
+// Update Current User Profile
+const updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    // Validate name
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Name is required",
+      });
+    }
+
+    // Update only name
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        name: name.trim(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.log("Update Profile Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// ===============================
+// Export Controllers
+// ===============================
 module.exports = {
   registerUser,
   loginUser,
-  getProfile
+  getProfile,
+  updateProfile,
 };

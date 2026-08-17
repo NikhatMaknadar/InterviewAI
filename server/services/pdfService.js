@@ -1,14 +1,30 @@
 const fs = require("fs");
-const pdf = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 
 const extractTextFromPDF = async (filePath) => {
-  const dataBuffer = fs.readFileSync(filePath);
+  try {
+    const dataBuffer = fs.readFileSync(filePath);
 
-  const data = await pdf(dataBuffer);
+    console.log("PDF size:", dataBuffer.length, "bytes");
 
-  console.log("Extracted text length:", data.text.length);
+    const parser = new PDFParse({
+      data: dataBuffer,
+    });
 
-  return data.text;
+    const result = await parser.getText();
+
+    await parser.destroy();
+
+    console.log("Extracted text length:", result.text.length);
+
+    return result.text;
+  } catch (error) {
+    console.error("PDF Extraction Error:", error.message);
+
+    throw new Error(
+      "Unable to read this PDF. Please upload a valid PDF resume.",
+    );
+  }
 };
 
 module.exports = {

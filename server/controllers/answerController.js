@@ -72,9 +72,20 @@ const submitAnswer = async (req, res) => {
       nextQuestion,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Submit Answer Error:", error);
 
-    res.status(500).json({
+    // Gemini quota / rate limit
+    if (error.status === 429 || error.code === 429) {
+      return res.status(429).json({
+        success: false,
+        message:
+          error.message ||
+          "AI evaluation is temporarily unavailable because the Gemini API quota has been exceeded. Please try again later.",
+      });
+    }
+
+    // Other errors
+    return res.status(500).json({
       success: false,
       message: "Server Error",
     });

@@ -42,17 +42,35 @@ const getInterviewReport = async (req, res) => {
     // Generate AI report
     const report = await generateInterviewReport(interview);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       overallScore: averageScore,
       report,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Interview Report Error:", error);
 
-    res.status(500).json({
+    // Gemini quota / rate limit
+    if (error.status === 429 || error.code === 429) {
+      return res.status(429).json({
+        success: false,
+        message:
+          "AI interview report is temporarily unavailable because the Gemini API quota has been exceeded. Please try again later.",
+      });
+    }
+
+    // Gemini temporarily unavailable
+    if (error.status === 503 || error.code === 503) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "AI interview report is temporarily unavailable because Gemini is experiencing high demand. Please try again in a few minutes.",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: "Failed to generate interview report.",
     });
   }
 };
